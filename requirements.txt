@@ -1,0 +1,9 @@
+# Core application utilizes Python 3.10+ standard library:
+# - dataclasses
+# - sqlite3
+# - tkinter / ttk
+# - argparse
+# - math, datetime, uuid, json
+
+# Testing framework:
+pytest>=8.0.0
