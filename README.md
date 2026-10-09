@@ -1,18 +1,6 @@
 # Location-Based Inventory System (Decomp Architecture)
 
-## Execution & Verification Summary
-- Checked task `Run full test suite`
-- Killed task `Run full test suite`
-- Created `test_gui.py`
-- Ran command: Run pytest in venv (`.venv\Scripts\python.exe -m pytest -v`)
-- Created `requirements.txt`
-- Created `README.md`
-- Ran command: Run final pytest check (`.venv\Scripts\python.exe -m pytest`)
-
----
-
-## Program Overview
-This application is a location-based inventory management system for physical real-world items. It binds geographic coordinates, timestamps, and origin metadata to cataloged items, while indexing physical attributes (category, mass, valuation, dimensions) for fast spatial queries and multi-criteria filtering. The architecture provides two completely decoupled user interfaces—a visual Tkinter dashboard (GUI) and an expressive command-line tool (CLI)—both operating over a unified business service layer and persistent local SQLite database.
+A location-based inventory management system for physical real-world items that binds geographic coordinates, timestamps, and origin provenance to cataloged items, while indexing physical attributes (category, mass, valuation, dimensions) for rapid spatial queries and multi-criteria filtering. The application features two completely decoupled interfaces—a graphical dashboard (Tkinter GUI) and a terminal interface (CLI)—both backed by a unified service layer and persistent local SQLite database.
 
 ---
 
@@ -59,8 +47,8 @@ Antigravity/
 Both the CLI and GUI frontends share the identical underlying [`InventoryService`](app/services/inventory_service.py) and SQLite storage ([`InventoryRepository`](app/storage/repository.py)), allowing changes in one interface to be reflected in the other.
 
 #### Launching the Graphical Interface (Tkinter Dashboard)
-```powershell
-.venv\Scripts\python.exe -m app.gui
+```bash
+python -m app.gui
 ```
 * **Dashboard Stats**: Real-time cards displaying total item count, cumulative carrier load (kg), and appraised valuation (Pokos).
 * **Logging Form**: Input panel with validation for item name, category series, mass, value, met location tag, and coordinates.
@@ -69,28 +57,29 @@ Both the CLI and GUI frontends share the identical underlying [`InventoryService
 * **JSON Backup**: One-click import and export buttons.
 
 #### Launching the Command-Line Interface (CLI)
-```powershell
-.venv\Scripts\python.exe -m app.cli --help
+```bash
+python -m app.cli --help
 ```
+
 * **Register a new item**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli add --name "Titanium Gyroscope" --category MECHANICAL --weight 4.5 --value 320 --lat 37.7749 --lon -122.4194 --met-tag "MAPSEC_WAREHOUSE_01"
+  ```bash
+  python -m app.cli add --name "Titanium Gyroscope" --category MECHANICAL --weight 4.5 --value 320 --lat 37.7749 --lon -122.4194 --met-tag "MAPSEC_WAREHOUSE_01"
   ```
 * **List inventory with filters**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli list --category MECHANICAL --min-weight 2.0
+  ```bash
+  python -m app.cli list --category MECHANICAL --min-weight 2.0
   ```
 * **Spatial radius search (Pokémon encounter resolver)**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli search-spatial --lat 37.7750 --lon -122.4190 --radius-km 25.0
+  ```bash
+  python -m app.cli search-spatial --lat 37.7750 --lon -122.4190 --radius-km 25.0
   ```
 * **Inspect legacy memory decomposition**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli inspect <ITEM_ID_OR_PREFIX>
+  ```bash
+  python -m app.cli inspect <ITEM_ID_OR_PREFIX>
   ```
 * **View Pikmin-style aggregate statistics**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli summary
+  ```bash
+  python -m app.cli summary
   ```
 
 ---
@@ -166,24 +155,19 @@ class InventoryItem:
 
 ### 4. Test Suite Verification
 
-Run the test suite inside the virtual environment:
-```powershell
-.venv\Scripts\python.exe -m pytest -v
+Run the test suite using `pytest`:
+```bash
+pytest -v
 ```
 
-**Results**: All **16 tests passed in 0.42s** across:
-* `tests/test_models.py`: Validates Haversine distance, boundary checks, and full roundtrip dictionary serialization.
-* `tests/test_catalog.py`: Validates Pikmin-style categorized array partitioning, weight/value indexing, spatial radial filtering, and aggregate summaries.
-* `tests/test_repository.py`: Validates SQLite CRUD operations, connection cleanup, and JSON export/import.
-* `tests/test_cli.py`: Validates CLI command execution and argument parsing.
-* `tests/test_gui.py`: Validates Tkinter component initialization, data seeding, and summary card updates.
+All 16 foundational tests validate domain models, Haversine spatial calculations, categorized array indexing, SQLite persistence, and both GUI and CLI interfaces.
 
 ---
 
-## Architectural Description & Decompilation Roots
-The core architecture bridges hardware-efficient data structures from classic decompiled games into a modular Python system:
-1. **Provenance & Location**: Directly inspired by how Gen 3 Pokémon cartridges manage compact provenance in hardware-constrained SRAM.
-2. **Cataloging & Array Partitioning**: Inspired by how the GameCube Pikmin 2 engine groups carryable pellets and treasures into indexed category arrays for instant carrying-load verification and appraisal sums.
+## Program Architecture & Decompilation Roots
+This software adapts legacy Game Boy Advance and GameCube decompilation memory patterns to solve modern spatial inventory challenges:
+1. **Provenance & Met-Location**: Replicates Game Boy Advance cartridge-level provenance by binding compact spatial coordinates, acquisition timestamps, container apparatus, and custodian metadata to physical item records.
+2. **Categorized Physical Arrays**: Replicates GameCube-era contiguous memory arrays by segregating items into categorized partitions indexed by physical mass thresholds and appraisal valuations for rapid multi-attribute retrieval.
 
 ---
 
