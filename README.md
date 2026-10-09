@@ -36,8 +36,7 @@ Antigravity/
 │   ├── test_cli.py                # Command-line interface argument dispatch tests
 │   └── test_gui.py                # Tkinter visual dashboard tests
 ├── requirements.txt
-├── README.md
-└── CLASSMATE_EXPORT.md
+└── README.md
 ```
 
 ---
