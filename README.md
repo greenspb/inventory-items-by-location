@@ -9,45 +9,14 @@
 - Created `README.md`
 - Ran command: Run final pytest check (`.venv\Scripts\python.exe -m pytest`)
 
-The location-based inventory application architecture is implemented, adapting the legacy C struct memory patterns from **Pokémon Emerald** and **Pikmin 2** into modern, type-safe Python dataclasses.
+---
+
+## Program Overview
+This application is a location-based inventory management system for physical real-world items. It binds geographic coordinates, timestamps, and origin metadata to cataloged items, while indexing physical attributes (category, mass, valuation, dimensions) for fast spatial queries and multi-criteria filtering. The architecture provides two completely decoupled user interfaces—a visual Tkinter dashboard (GUI) and an expressive command-line tool (CLI)—both operating over a unified business service layer and persistent local SQLite database.
 
 ---
 
-### 1. Legacy Decompilation Memory & Struct Patterns
-
-#### A. Pokémon Emerald Pattern: Spatial Provenance & "Met Location"
-In `pret/pokeemerald` (`include/pokemon.h`), Pokémon data is divided into 12-byte substructures. Substructure 3 (`PokemonSubstruct3`) encapsulates origin and encounter context:
-```c
-struct PokemonSubstruct3 {
-    u8 pokerus;
-    u8 metLocation;       // MAPSEC_* region map section ID
-    u16 metLevel:7;       // Initial acquisition condition (0-100)
-    u16 metGame:4;        // Cartridge provenance (Emerald, Ruby, etc.)
-    u16 pokeball:4;       // Containment apparatus
-    u16 otGender:1;       // Trainer metadata
-    ...
-};
-```
-* **Python Adaptation**: Refactored into [`SpatialCoordinates`](app/core/models.py) (geographic latitude, longitude, altitude, accuracy radius, and Great-Circle / Haversine distance calculations) and [`MetLocationMetadata`](app/core/models.py) (binding GPS coordinates, ISO-8601 UTC timestamp, map section tag, origin source, handler ID, and containment specification).
-
-#### B. Pikmin 2 Pattern: Categorized Inventory Arrays & Physical Configs
-In `projectPiki/pikmin2` (`plugProjectKandoU/pelletConfig.h`, `TreasureMgr.h`), carryable entities and treasures define strict physical transport and appraisal metrics:
-```c
-struct PelletConfig {
-    char*   mName;        // Identifier
-    f32     mWeight;      // Minimum Pikmin carrier threshold (mass)
-    f32     mMaxWeight;   // Maximum carrying capacity
-    u32     mPoko;        // Appraised monetary value
-    u8      mCategory;    // Treasure series / Pellet color taxon
-    f32     mRadius;      // Physical bounding volume
-    u8      mDynamics;    // Physical transport dynamics
-};
-```
-* **Python Adaptation**: Refactored into [`PhysicalAttributes`](app/core/models.py) (category series, mass in kg, appraised value in Pokos, 3D dimensions, volume, fragility rating) and [`CategorizedInventoryArray`](app/core/catalog.py) (in-memory indexed partitioned arrays by category, providing sub-millisecond filtering and Pikmin-style aggregate carrier weight / Poko valuation summaries).
-
----
-
-### 2. Project Directory Structure
+### 1. Project Directory Structure
 
 ```
 Antigravity/
@@ -79,8 +48,50 @@ Antigravity/
 │   ├── test_cli.py                # Command-line interface argument dispatch tests
 │   └── test_gui.py                # Tkinter visual dashboard tests
 ├── requirements.txt
-└── README.md
+├── README.md
+└── CLASSMATE_EXPORT.md
 ```
+
+---
+
+### 2. Running the Separate Interfaces
+
+Both the CLI and GUI frontends share the identical underlying [`InventoryService`](app/services/inventory_service.py) and SQLite storage ([`InventoryRepository`](app/storage/repository.py)), allowing changes in one interface to be reflected in the other.
+
+#### Launching the Graphical Interface (Tkinter Dashboard)
+```powershell
+.venv\Scripts\python.exe -m app.gui
+```
+* **Dashboard Stats**: Real-time cards displaying total item count, cumulative carrier load (kg), and appraised valuation (Pokos).
+* **Logging Form**: Input panel with validation for item name, category series, mass, value, met location tag, and coordinates.
+* **Spatial & Attribute Filtering**: Filter by category, mass thresholds, or search by geographic radius (`center_lat`, `center_lon`, `radius_km`).
+* **Memory Struct Inspector**: Double-click any row to view the legacy C struct decomposition.
+* **JSON Backup**: One-click import and export buttons.
+
+#### Launching the Command-Line Interface (CLI)
+```powershell
+.venv\Scripts\python.exe -m app.cli --help
+```
+* **Register a new item**:
+  ```powershell
+  .venv\Scripts\python.exe -m app.cli add --name "Titanium Gyroscope" --category MECHANICAL --weight 4.5 --value 320 --lat 37.7749 --lon -122.4194 --met-tag "MAPSEC_WAREHOUSE_01"
+  ```
+* **List inventory with filters**:
+  ```powershell
+  .venv\Scripts\python.exe -m app.cli list --category MECHANICAL --min-weight 2.0
+  ```
+* **Spatial radius search (Pokémon encounter resolver)**:
+  ```powershell
+  .venv\Scripts\python.exe -m app.cli search-spatial --lat 37.7750 --lon -122.4190 --radius-km 25.0
+  ```
+* **Inspect legacy memory decomposition**:
+  ```powershell
+  .venv\Scripts\python.exe -m app.cli inspect <ITEM_ID_OR_PREFIX>
+  ```
+* **View Pikmin-style aggregate statistics**:
+  ```powershell
+  .venv\Scripts\python.exe -m app.cli summary
+  ```
 
 ---
 
@@ -153,48 +164,7 @@ class InventoryItem:
 
 ---
 
-### 4. Running the Separate Interfaces
-
-Both the CLI and GUI frontends share the identical underlying [`InventoryService`](app/services/inventory_service.py) and SQLite storage ([`InventoryRepository`](app/storage/repository.py)), allowing changes in one interface to be reflected in the other.
-
-#### Launching the Graphical Interface (Tkinter Dashboard)
-```powershell
-.venv\Scripts\python.exe -m app.gui
-```
-* **Dashboard Stats**: Real-time cards displaying total item count, cumulative carrier load (kg), and appraised valuation (Pokos).
-* **Logging Form**: Input panel with validation for item name, category series, mass, value, met location tag, and coordinates.
-* **Spatial & Attribute Filtering**: Filter by category, mass thresholds, or search by geographic radius (`center_lat`, `center_lon`, `radius_km`).
-* **Memory Struct Inspector**: Double-click any row to view the legacy C struct decomposition.
-* **JSON Backup**: One-click import and export buttons.
-
-#### Launching the Command-Line Interface (CLI)
-```powershell
-.venv\Scripts\python.exe -m app.cli --help
-```
-* **Register a new item**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli add --name "Titanium Gyroscope" --category MECHANICAL --weight 4.5 --value 320 --lat 37.7749 --lon -122.4194 --met-tag "MAPSEC_WAREHOUSE_01"
-  ```
-* **List inventory with filters**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli list --category MECHANICAL --min-weight 2.0
-  ```
-* **Spatial radius search (Pokémon encounter resolver)**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli search-spatial --lat 37.7750 --lon -122.4190 --radius-km 25.0
-  ```
-* **Inspect legacy memory decomposition**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli inspect <ITEM_ID_OR_PREFIX>
-  ```
-* **View Pikmin-style aggregate statistics**:
-  ```powershell
-  .venv\Scripts\python.exe -m app.cli summary
-  ```
-
----
-
-### 5. Test Suite Verification
+### 4. Test Suite Verification
 
 Run the test suite inside the virtual environment:
 ```powershell
@@ -207,3 +177,44 @@ Run the test suite inside the virtual environment:
 * `tests/test_repository.py`: Validates SQLite CRUD operations, connection cleanup, and JSON export/import.
 * `tests/test_cli.py`: Validates CLI command execution and argument parsing.
 * `tests/test_gui.py`: Validates Tkinter component initialization, data seeding, and summary card updates.
+
+---
+
+## Architectural Description & Decompilation Roots
+The core architecture bridges hardware-efficient data structures from classic decompiled games into a modular Python system:
+1. **Provenance & Location**: Directly inspired by how Gen 3 Pokémon cartridges manage compact provenance in hardware-constrained SRAM.
+2. **Cataloging & Array Partitioning**: Inspired by how the GameCube Pikmin 2 engine groups carryable pellets and treasures into indexed category arrays for instant carrying-load verification and appraisal sums.
+
+---
+
+### 5. Legacy Decompilation Memory & Struct Patterns
+
+#### A. Pokémon Emerald Pattern: Spatial Provenance & "Met Location"
+In `pret/pokeemerald` (`include/pokemon.h`), Pokémon data is divided into 12-byte substructures. Substructure 3 (`PokemonSubstruct3`) encapsulates origin and encounter context:
+```c
+struct PokemonSubstruct3 {
+    u8 pokerus;
+    u8 metLocation;       // MAPSEC_* region map section ID
+    u16 metLevel:7;       // Initial acquisition condition (0-100)
+    u16 metGame:4;        // Cartridge provenance (Emerald, Ruby, etc.)
+    u16 pokeball:4;       // Containment apparatus
+    u16 otGender:1;       // Trainer metadata
+    ...
+};
+```
+* **Python Adaptation**: Refactored into [`SpatialCoordinates`](app/core/models.py) (geographic latitude, longitude, altitude, accuracy radius, and Great-Circle / Haversine distance calculations) and [`MetLocationMetadata`](app/core/models.py) (binding GPS coordinates, ISO-8601 UTC timestamp, map section tag, origin source, handler ID, and containment specification).
+
+#### B. Pikmin 2 Pattern: Categorized Inventory Arrays & Physical Configs
+In `projectPiki/pikmin2` (`plugProjectKandoU/pelletConfig.h`, `TreasureMgr.h`), carryable entities and treasures define strict physical transport and appraisal metrics:
+```c
+struct PelletConfig {
+    char*   mName;        // Identifier
+    f32     mWeight;      // Minimum Pikmin carrier threshold (mass)
+    f32     mMaxWeight;   // Maximum carrying capacity
+    u32     mPoko;        // Appraised monetary value
+    u8      mCategory;    // Treasure series / Pellet color taxon
+    f32     mRadius;      // Physical bounding volume
+    u8      mDynamics;    // Physical transport dynamics
+};
+```
+* **Python Adaptation**: Refactored into [`PhysicalAttributes`](app/core/models.py) (category series, mass in kg, appraised value in Pokos, 3D dimensions, volume, fragility rating) and [`CategorizedInventoryArray`](app/core/catalog.py) (in-memory indexed partitioned arrays by category, providing sub-millisecond filtering and Pikmin-style aggregate carrier weight / Poko valuation summaries).
